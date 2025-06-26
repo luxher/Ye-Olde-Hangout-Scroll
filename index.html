@@ -18,7 +18,7 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            padding: 1rem 2rem;
+            padding: 1rem; /* Adjusted padding for mobile */
         }
         .font-uncial {
             font-family: 'Uncial Antiqua', cursive;
@@ -30,10 +30,16 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             max-width: 900px;
             width: 100%;
-            border: 20px solid transparent;
-            /* Corrected: Replaced external URL with an embedded SVG data URI to prevent broken images */
+            border: 10px solid transparent; /* Thinner border for mobile */
             border-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cstyle%3Epath%7Bfill:%238a231f;stroke:%235a1815;stroke-width:1%7D%3C/style%3E%3Cpath d='M0 0 L50 15 L100 0 L85 50 L100 100 L50 85 L0 100 L15 50 Z'/%3E%3C/svg%3E") 30 round;
-            padding: 2rem;
+            padding: 1rem; /* Adjusted padding for mobile */
+        }
+        /* Apply larger border and padding on medium screens and up */
+        @media (min-width: 768px) {
+            .manuscript-page {
+                border-width: 20px;
+                padding: 2rem;
+            }
         }
 
         .btn-primary {
@@ -106,7 +112,7 @@
     <div class="manuscript-page">
         
         <header class="text-center mb-8">
-            <h1 class="text-4xl md:text-5xl font-bold font-uncial text-[#8a231f]">
+            <h1 class="text-3xl md:text-5xl font-bold font-uncial text-[#8a231f]">
                 Ye Olde Hangout Scroll
             </h1>
             <p class="text-[#5d4037] mt-2 text-lg">Inscribe thy fancies & let providence decree thine activity!</p>
@@ -118,8 +124,10 @@
             <p class="mt-2 text-sm">Steps: Go to your Firebase project -> Authentication -> Sign-in method -> Add new provider -> Select Anonymous and click Enable.</p>
         </div>
         
+        <!-- Responsive Grid: 1 column on mobile, 2 on medium screens and up -->
         <div id="app-content" class="grid grid-cols-1 md:grid-cols-2 gap-8">
             
+            <!-- Left Column -->
             <div>
                 <h2 class="text-2xl font-bold font-uncial mb-4 text-[#3a5b92]">Inscribe an Idea</h2>
                 <div class="flex space-x-2">
@@ -133,7 +141,9 @@
                 </div>
             </div>
 
-            <div class="flex flex-col justify-between">
+            <!-- Right Column -->
+            <div class="flex flex-col justify-between md:pt-0">
+                <!-- Section for Spinner -->
                 <div>
                     <h2 class="text-2xl font-bold font-uncial mb-4 text-[#8a231f]">A Fateful Choice!</h2>
                     <p class="text-[#5d4037] mb-6 text-center">When the time is nigh, consult the wheel of fortune to choose thy path.</p>
@@ -146,6 +156,7 @@
                         </svg>
                     </div>
                 </div>
+                <!-- Section for Options -->
                 <div class="mt-6">
                     <h3 class="text-lg font-bold font-uncial mb-3">Decrees</h3>
                     <div class="flex items-center justify-between bg-black bg-opacity-5 p-3 border border-[#a1887f] border-opacity-50 rounded-sm">
@@ -158,6 +169,7 @@
         </div>
     </div>
 
+    <!-- Result Modal -->
     <div id="result-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
         <div class="modal-content p-8 text-center max-w-md w-full relative rounded-lg">
             <button id="close-modal-btn" class="absolute top-4 right-4 text-[#5d4037] hover:text-[#8a231f]"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
@@ -193,7 +205,6 @@
         const dontRepeatCheckbox = document.getElementById('dont-repeat-checkbox');
         const resetDrawnBtn = document.getElementById('reset-drawn-btn');
         const configError = document.getElementById('config-error');
-        const appContent = document.getElementById('app-content');
         
         let app, auth, db, ideasCollectionRef;
         let allIdeas = [];
@@ -225,7 +236,6 @@
                 console.error("CRITICAL: Anonymous sign-in failed.", error);
                 configError.classList.remove('hidden');
                 document.getElementById('loading-ideas').textContent = 'Connection failed.';
-                // The app remains disabled because isAuthReady stays false
             }
         }
 
@@ -236,7 +246,6 @@
             listenForIdeas();
             setupEventListeners();
 
-            // Enable UI elements now that we are connected
             ideaInput.disabled = false;
             addIdeaBtn.disabled = false;
             wheelContainer.classList.remove('disabled');
@@ -283,10 +292,7 @@
         }
         
         async function addIdea() {
-            if (!isAuthReady) {
-                console.error("Cannot add idea: Authentication not ready.");
-                return;
-            }
+            if (!isAuthReady) return;
             const text = ideaInput.value.trim();
             if (text) {
                 try {
