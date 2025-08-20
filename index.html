@@ -123,9 +123,10 @@
             <div class="max-w-sm mx-auto">
                 <p class="text-[#5d4037] mb-4">Enter an ID to join a friend's scroll, or create a new one for thy fellowship.</p>
                 <input type="text" id="room-id-input" placeholder="Enter Scroll ID" class="w-full p-3 mb-4 bg-[#fdfaf3] border-2 border-[#a1887f] rounded-sm focus:outline-none focus:ring-2 focus:ring-[#5d4037]">
-                <button id="join-room-btn" class="w-full btn-primary py-3 rounded-sm font-semibold font-uncial mb-4">Join Scroll</button>
-                <p class="text-[#5d4037] mb-4">or</p>
-                <button id="create-room-btn" class="w-full bg-[#3a5b92] text-white py-3 rounded-sm font-semibold font-uncial">Create a New Scroll</button>
+                <button id="join-room-btn" class="w-full btn-primary py-3 rounded-sm font-semibold font-uncial mb-2">Join Scroll</button>
+                <button id="create-room-btn" class="w-full bg-[#3a5b92] text-white py-3 rounded-sm font-semibold font-uncial mb-4">Create a New Scroll</button>
+                <div class="ornamental-hr"></div>
+                <button id="join-legacy-btn" class="w-full bg-gray-600 text-white py-2 rounded-sm font-semibold">Access Original Public Scroll</button>
             </div>
         </div>
         
@@ -217,6 +218,7 @@
         const roomIdInput = document.getElementById('room-id-input');
         const joinRoomBtn = document.getElementById('join-room-btn');
         const createRoomBtn = document.getElementById('create-room-btn');
+        const joinLegacyBtn = document.getElementById('join-legacy-btn');
         const shareBtn = document.getElementById('share-btn');
         const shareFeedback = document.getElementById('share-feedback');
         const subtitle = document.getElementById('subtitle');
@@ -225,6 +227,7 @@
         let allIdeas = [];
         let isSpinning = false;
         let isAuthReady = false;
+        const LEGACY_SCROLL_ID = "__LEGACY_SCROLL__";
 
         async function initialize() {
             app = initializeApp(firebaseConfig);
@@ -259,13 +262,27 @@
             if (!roomId) return;
             roomSelection.classList.add('hidden');
             appContent.classList.remove('hidden');
-            subtitle.textContent = `Scroll ID: ${roomId}`;
+            
+            if (roomId === LEGACY_SCROLL_ID) {
+                subtitle.textContent = `Original Public Scroll`;
+                shareBtn.style.display = 'none'; // Hide share button for legacy scroll
+            } else {
+                subtitle.textContent = `Scroll ID: ${roomId}`;
+                shareBtn.style.display = 'block';
+            }
+            
             setupAppForRoom(roomId);
         }
 
         function setupAppForRoom(roomId) {
-            const privateCollectionName = "hangout-scrolls";
-            ideasCollectionRef = collection(db, privateCollectionName, roomId, 'ideas');
+            if (roomId === LEGACY_SCROLL_ID) {
+                // Path for the original, single public scroll
+                ideasCollectionRef = collection(db, "my-friends-scroll");
+            } else {
+                // Path for new, private scrolls
+                const privateCollectionName = "hangout-scrolls";
+                ideasCollectionRef = collection(db, privateCollectionName, roomId, 'ideas');
+            }
             
             listenForIdeas();
             setupEventListeners();
@@ -321,7 +338,6 @@
             if (!isAuthReady || !ideasCollectionRef) return;
             try { 
                 await deleteDoc(doc(ideasCollectionRef, id));
-                console.log("Document deleted successfully");
             }
             catch (error) { console.error("Error deleting document: ", error); }
         }
@@ -388,6 +404,11 @@
                    window.history.pushState({path: newUrl}, '', newUrl);
                    joinRoom(roomId);
                 }
+            };
+
+            joinLegacyBtn.onclick = () => {
+                // We don't change the URL for the legacy scroll
+                joinRoom(LEGACY_SCROLL_ID);
             };
             
             shareBtn.onclick = () => {
