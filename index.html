@@ -430,10 +430,12 @@
                 localStorage.removeItem('lastVisitedScroll');
                 const newUrl = window.location.origin + window.location.pathname;
                 window.history.pushState({path: newUrl}, '', newUrl);
-                // Hide app, show room selection
                 appContent.classList.add('hidden');
                 roomSelection.classList.remove('hidden');
-                if (unsubscribeFromIdeas) unsubscribeFromIdeas();
+                if (unsubscribeFromIdeas) {
+                    unsubscribeFromIdeas();
+                    unsubscribeFromIdeas = null;
+                }
             };
         }
 
