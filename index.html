@@ -254,6 +254,7 @@
             db = getFirestore(app);
             
             setupRoomSelectionListeners();
+            setupAppEventListeners();
 
             onAuthStateChanged(auth, user => {
                 if (user) {
@@ -308,7 +309,6 @@
             }
             
             listenForIdeas();
-            setupAppEventListeners();
 
             ideaInput.disabled = false;
             addIdeaBtn.disabled = false;
