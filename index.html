@@ -265,7 +265,7 @@
             
             if (roomId === LEGACY_SCROLL_ID) {
                 subtitle.textContent = `Original Public Scroll`;
-                shareBtn.style.display = 'none'; // Hide share button for legacy scroll
+                shareBtn.style.display = 'none';
             } else {
                 subtitle.textContent = `Scroll ID: ${roomId}`;
                 shareBtn.style.display = 'block';
@@ -276,16 +276,14 @@
 
         function setupAppForRoom(roomId) {
             if (roomId === LEGACY_SCROLL_ID) {
-                // Path for the original, single public scroll
                 ideasCollectionRef = collection(db, "my-friends-scroll");
             } else {
-                // Path for new, private scrolls
                 const privateCollectionName = "hangout-scrolls";
                 ideasCollectionRef = collection(db, privateCollectionName, roomId, 'ideas');
             }
             
             listenForIdeas();
-            setupEventListeners();
+            setupAppEventListeners();
 
             ideaInput.disabled = false;
             addIdeaBtn.disabled = false;
@@ -378,7 +376,7 @@
             } catch (error) { console.error("Error resetting drawn ideas: ", error); }
         }
 
-        function setupEventListeners() {
+        function setupAppEventListeners() {
             addIdeaBtn.onclick = addIdea;
             ideaInput.onkeypress = (e) => { if (e.key === 'Enter') addIdea(); };
             wheelContainer.onclick = handleSpin;
@@ -389,8 +387,16 @@
             closeModalBtn.onclick = () => resultModal.classList.add('hidden');
             resultModal.onclick = (e) => { if (e.target === resultModal) resultModal.classList.add('hidden'); };
             resetDrawnBtn.onclick = resetDrawnIdeas;
+            shareBtn.onclick = () => {
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    shareFeedback.textContent = 'Copied!';
+                    setTimeout(() => { shareFeedback.textContent = ''; }, 2000);
+                });
+            };
+        }
 
-            createRoomBtn.onclick = () => {
+        function setupRoomSelectionListeners() {
+             createRoomBtn.onclick = () => {
                 const newRoomId = 'scroll-' + Math.random().toString(36).substr(2, 9);
                 const newUrl = window.location.origin + window.location.pathname + '?id=' + newRoomId;
                 window.history.pushState({path: newUrl}, '', newUrl);
@@ -407,19 +413,12 @@
             };
 
             joinLegacyBtn.onclick = () => {
-                // We don't change the URL for the legacy scroll
                 joinRoom(LEGACY_SCROLL_ID);
-            };
-            
-            shareBtn.onclick = () => {
-                navigator.clipboard.writeText(window.location.href).then(() => {
-                    shareFeedback.textContent = 'Copied!';
-                    setTimeout(() => { shareFeedback.textContent = ''; }, 2000);
-                });
             };
         }
 
         initialize();
+        setupRoomSelectionListeners();
     </script>
 </body>
 </html>
