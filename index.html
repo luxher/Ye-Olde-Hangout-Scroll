@@ -126,7 +126,7 @@
                 <button id="join-room-btn" class="w-full btn-primary py-3 rounded-sm font-semibold font-uncial mb-2">Join Scroll</button>
                 <button id="create-room-btn" class="w-full bg-[#3a5b92] text-white py-3 rounded-sm font-semibold font-uncial mb-4">Create a New Scroll</button>
                 <div class="ornamental-hr"></div>
-                <button id="join-legacy-btn" class="w-full bg-gray-600 text-white py-2 rounded-sm font-semibold">Access Original Public Scroll</button>
+                <button id="join-legacy-btn" class="w-full bg-gray-600 text-white py-2 rounded-sm font-semibold">Access Original "ERL" Scroll</button>
             </div>
         </div>
         
@@ -227,14 +227,13 @@
         let allIdeas = [];
         let isSpinning = false;
         let isAuthReady = false;
-        const LEGACY_SCROLL_ID = "__LEGACY_SCROLL__";
+        const LEGACY_SCROLL_ID = "ERL"; // Assigning the permanent ID for your original scroll
 
         async function initialize() {
             app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getFirestore(app);
             
-            // Setup listeners for the initial screen immediately
             setupRoomSelectionListeners();
 
             onAuthStateChanged(auth, user => {
@@ -267,11 +266,9 @@
             appContent.classList.remove('hidden');
             
             if (roomId === LEGACY_SCROLL_ID) {
-                subtitle.textContent = `Original Public Scroll`;
-                shareBtn.style.display = 'none';
+                subtitle.textContent = `The Original "ERL" Scroll`;
             } else {
                 subtitle.textContent = `Scroll ID: ${roomId}`;
-                shareBtn.style.display = 'block';
             }
             
             setupAppForRoom(roomId);
@@ -421,6 +418,8 @@
             };
 
             joinLegacyBtn.onclick = () => {
+                const newUrl = window.location.origin + window.location.pathname + '?id=' + LEGACY_SCROLL_ID;
+                window.history.pushState({path: newUrl}, '', newUrl);
                 joinRoom(LEGACY_SCROLL_ID);
             };
         }
