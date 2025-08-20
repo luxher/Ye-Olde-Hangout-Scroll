@@ -90,7 +90,7 @@
             margin: 1.5rem 0;
         }
 
-        #result-modal {
+        .modal {
             transition: opacity 0.3s ease-in-out;
         }
         .modal-content {
@@ -142,6 +142,7 @@
                 <div id="share-section" class="mb-6 text-center">
                     <button id="share-btn" class="w-full bg-green-700 text-white py-2 rounded-sm font-semibold font-uncial">Share Invite Link</button>
                     <p id="share-feedback" class="text-green-800 text-sm mt-1 h-4"></p>
+                    <button id="go-home-btn" class="w-full mt-2 bg-gray-500 text-white py-1 rounded-sm text-sm">Back to Main Hall</button>
                 </div>
                 <h2 class="text-2xl font-bold font-uncial mb-4 text-[#3a5b92]">Inscribe an Idea</h2>
                 <div class="flex space-x-2">
@@ -170,7 +171,7 @@
                     <h3 class="text-lg font-bold font-uncial mb-3">Decrees</h3>
                     <div class="flex items-center justify-between bg-black bg-opacity-5 p-3 border border-[#a1887f] border-opacity-50 rounded-sm">
                         <label for="dont-repeat-checkbox" class="flex-grow cursor-pointer">Do not repeat chosen ideas</label>
-                        <input type="checkbox" id="dont-repeat-checkbox" checked class="h-5 w-5 text-[#8a231f] border-[#a1887f] rounded-sm focus:ring-[#8a231f] bg-transparent">
+                        <input type="checkbox" id="dont-repeat-checkbox" class="h-5 w-5 text-[#8a231f] border-[#a1887f] rounded-sm focus:ring-[#8a231f] bg-transparent">
                     </div>
                      <button id="reset-drawn-btn" class="w-full mt-3 bg-[#c5b8a5] text-[#4a2c2a] py-2 rounded-sm font-semibold hover:bg-[#b0a293] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#a1887f] transition-colors">Cleanse the Slate</button>
                 </div>
@@ -178,12 +179,24 @@
         </div>
     </div>
 
-    <div id="result-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
+    <!-- Result Modal -->
+    <div id="result-modal" class="hidden modal fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
         <div class="modal-content p-8 text-center max-w-md w-full relative rounded-lg">
             <button id="close-modal-btn" class="absolute top-4 right-4 text-[#5d4037] hover:text-[#8a231f]"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
             <h2 class="text-2xl font-bold text-[#3a5b92] mb-2 font-uncial">The Fates Have Spoken...</h2>
             <p id="result-text" class="text-4xl md:text-5xl font-bold font-uncial text-[#3b2d2c] my-8 min-h-[64px]"></p>
             <button id="spin-again-btn" class="w-40 mx-auto bg-[#c5a560] text-[#4a2c2a] py-3 rounded-sm font-semibold hover:bg-[#d4b570] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#a1887f] transition-colors font-uncial">Consult Again!</button>
+        </div>
+    </div>
+
+    <!-- Password Modal -->
+    <div id="password-modal" class="hidden modal fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
+        <div class="modal-content p-8 text-center max-w-sm w-full relative rounded-lg">
+            <button id="close-password-modal-btn" class="absolute top-4 right-4 text-[#5d4037] hover:text-[#8a231f]"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+            <h2 class="text-2xl font-bold text-[#3a5b92] mb-4 font-uncial">Speak the secret word</h2>
+            <input type="password" id="password-input" class="w-full p-3 mb-4 bg-[#fdfaf3] border-2 border-[#a1887f] rounded-sm focus:outline-none focus:ring-2 focus:ring-[#5d4037]">
+            <button id="password-submit-btn" class="w-full btn-primary py-3 rounded-sm font-semibold font-uncial">Enter</button>
+            <p id="password-error" class="text-red-700 text-sm mt-2 h-4"></p>
         </div>
     </div>
     
@@ -222,12 +235,18 @@
         const shareBtn = document.getElementById('share-btn');
         const shareFeedback = document.getElementById('share-feedback');
         const subtitle = document.getElementById('subtitle');
+        const passwordModal = document.getElementById('password-modal');
+        const closePasswordModalBtn = document.getElementById('close-password-modal-btn');
+        const passwordInput = document.getElementById('password-input');
+        const passwordSubmitBtn = document.getElementById('password-submit-btn');
+        const passwordError = document.getElementById('password-error');
         
         let app, auth, db, ideasCollectionRef;
         let allIdeas = [];
         let isSpinning = false;
         let isAuthReady = false;
-        const LEGACY_SCROLL_ID = "ERL"; // Assigning the permanent ID for your original scroll
+        let unsubscribeFromIdeas;
+        const LEGACY_SCROLL_ID = "ERL"; 
 
         async function initialize() {
             app = initializeApp(firebaseConfig);
@@ -241,9 +260,14 @@
                     isAuthReady = true;
                     configError.classList.add('hidden');
                     const urlParams = new URLSearchParams(window.location.search);
-                    const roomId = urlParams.get('id');
-                    if (roomId) {
-                        joinRoom(roomId);
+                    const roomIdFromUrl = urlParams.get('id');
+                    const roomIdFromStorage = localStorage.getItem('lastVisitedScroll');
+
+                    if (roomIdFromUrl) {
+                        localStorage.setItem('lastVisitedScroll', roomIdFromUrl);
+                        joinRoom(roomIdFromUrl);
+                    } else if (roomIdFromStorage) {
+                        joinRoom(roomIdFromStorage);
                     } else {
                         roomSelection.classList.remove('hidden');
                     }
@@ -262,6 +286,7 @@
 
         function joinRoom(roomId) {
             if (!roomId) return;
+            localStorage.setItem('lastVisitedScroll', roomId);
             roomSelection.classList.add('hidden');
             appContent.classList.remove('hidden');
             
@@ -291,8 +316,11 @@
         }
 
         function listenForIdeas() {
+            if (unsubscribeFromIdeas) {
+                unsubscribeFromIdeas();
+            }
             if (!isAuthReady || !ideasCollectionRef) return;
-            onSnapshot(query(ideasCollectionRef), (snapshot) => {
+            unsubscribeFromIdeas = onSnapshot(query(ideasCollectionRef), (snapshot) => {
                 allIdeas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderIdeas();
             }, (error) => {
@@ -398,6 +426,11 @@
                     setTimeout(() => { shareFeedback.textContent = ''; }, 2000);
                 });
             };
+            const goHomeBtn = document.getElementById('go-home-btn');
+            goHomeBtn.onclick = () => {
+                localStorage.removeItem('lastVisitedScroll');
+                window.location.href = window.location.origin + window.location.pathname;
+            };
         }
 
         function setupRoomSelectionListeners() {
@@ -418,9 +451,26 @@
             };
 
             joinLegacyBtn.onclick = () => {
-                const newUrl = window.location.origin + window.location.pathname + '?id=' + LEGACY_SCROLL_ID;
-                window.history.pushState({path: newUrl}, '', newUrl);
-                joinRoom(LEGACY_SCROLL_ID);
+                passwordModal.classList.remove('hidden');
+            };
+
+            closePasswordModalBtn.onclick = () => {
+                passwordModal.classList.add('hidden');
+                passwordInput.value = '';
+                passwordError.textContent = '';
+            };
+
+            passwordSubmitBtn.onclick = () => {
+                if (passwordInput.value === 'astros') {
+                    passwordModal.classList.add('hidden');
+                    passwordInput.value = '';
+                    passwordError.textContent = '';
+                    const newUrl = window.location.origin + window.location.pathname + '?id=' + LEGACY_SCROLL_ID;
+                    window.history.pushState({path: newUrl}, '', newUrl);
+                    joinRoom(LEGACY_SCROLL_ID);
+                } else {
+                    passwordError.textContent = 'Incorrect password.';
+                }
             };
         }
 
