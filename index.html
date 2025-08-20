@@ -253,8 +253,7 @@
             auth = getAuth(app);
             db = getFirestore(app);
             
-            setupRoomSelectionListeners();
-            setupAppEventListeners();
+            setupEventListeners();
 
             onAuthStateChanged(auth, user => {
                 if (user) {
@@ -409,7 +408,44 @@
             } catch (error) { console.error("Error resetting drawn ideas: ", error); }
         }
 
-        function setupAppEventListeners() {
+        function setupEventListeners() {
+            // Room Selection Listeners
+            createRoomBtn.onclick = () => {
+                const newRoomId = 'scroll-' + Math.random().toString(36).substr(2, 9);
+                const newUrl = window.location.origin + window.location.pathname + '?id=' + newRoomId;
+                window.history.pushState({path: newUrl}, '', newUrl);
+                joinRoom(newRoomId);
+            };
+            joinRoomBtn.onclick = () => {
+                const roomId = roomIdInput.value.trim();
+                if(roomId) {
+                   const newUrl = window.location.origin + window.location.pathname + '?id=' + roomId;
+                   window.history.pushState({path: newUrl}, '', newUrl);
+                   joinRoom(roomId);
+                }
+            };
+            joinLegacyBtn.onclick = () => {
+                passwordModal.classList.remove('hidden');
+            };
+            closePasswordModalBtn.onclick = () => {
+                passwordModal.classList.add('hidden');
+                passwordInput.value = '';
+                passwordError.textContent = '';
+            };
+            passwordSubmitBtn.onclick = () => {
+                if (passwordInput.value === 'astros') {
+                    passwordModal.classList.add('hidden');
+                    passwordInput.value = '';
+                    passwordError.textContent = '';
+                    const newUrl = window.location.origin + window.location.pathname + '?id=' + LEGACY_SCROLL_ID;
+                    window.history.pushState({path: newUrl}, '', newUrl);
+                    joinRoom(LEGACY_SCROLL_ID);
+                } else {
+                    passwordError.textContent = 'Incorrect password.';
+                }
+            };
+
+            // Main App Listeners
             addIdeaBtn.onclick = addIdea;
             ideaInput.onkeypress = (e) => { if (e.key === 'Enter') addIdea(); };
             wheelContainer.onclick = handleSpin;
@@ -435,47 +471,6 @@
                 if (unsubscribeFromIdeas) {
                     unsubscribeFromIdeas();
                     unsubscribeFromIdeas = null;
-                }
-            };
-        }
-
-        function setupRoomSelectionListeners() {
-             createRoomBtn.onclick = () => {
-                const newRoomId = 'scroll-' + Math.random().toString(36).substr(2, 9);
-                const newUrl = window.location.origin + window.location.pathname + '?id=' + newRoomId;
-                window.history.pushState({path: newUrl}, '', newUrl);
-                joinRoom(newRoomId);
-            };
-
-            joinRoomBtn.onclick = () => {
-                const roomId = roomIdInput.value.trim();
-                if(roomId) {
-                   const newUrl = window.location.origin + window.location.pathname + '?id=' + roomId;
-                   window.history.pushState({path: newUrl}, '', newUrl);
-                   joinRoom(roomId);
-                }
-            };
-
-            joinLegacyBtn.onclick = () => {
-                passwordModal.classList.remove('hidden');
-            };
-
-            closePasswordModalBtn.onclick = () => {
-                passwordModal.classList.add('hidden');
-                passwordInput.value = '';
-                passwordError.textContent = '';
-            };
-
-            passwordSubmitBtn.onclick = () => {
-                if (passwordInput.value === 'astros') {
-                    passwordModal.classList.add('hidden');
-                    passwordInput.value = '';
-                    passwordError.textContent = '';
-                    const newUrl = window.location.origin + window.location.pathname + '?id=' + LEGACY_SCROLL_ID;
-                    window.history.pushState({path: newUrl}, '', newUrl);
-                    joinRoom(LEGACY_SCROLL_ID);
-                } else {
-                    passwordError.textContent = 'Incorrect password.';
                 }
             };
         }
