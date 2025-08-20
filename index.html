@@ -426,10 +426,14 @@
                     setTimeout(() => { shareFeedback.textContent = ''; }, 2000);
                 });
             };
-            const goHomeBtn = document.getElementById('go-home-btn');
-            goHomeBtn.onclick = () => {
+            document.getElementById('go-home-btn').onclick = () => {
                 localStorage.removeItem('lastVisitedScroll');
-                window.location.href = window.location.origin + window.location.pathname;
+                const newUrl = window.location.origin + window.location.pathname;
+                window.history.pushState({path: newUrl}, '', newUrl);
+                // Hide app, show room selection
+                appContent.classList.add('hidden');
+                roomSelection.classList.remove('hidden');
+                if (unsubscribeFromIdeas) unsubscribeFromIdeas();
             };
         }
 
