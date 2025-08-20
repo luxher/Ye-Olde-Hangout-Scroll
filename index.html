@@ -233,6 +233,9 @@
             app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getFirestore(app);
+            
+            // Setup listeners for the initial screen immediately
+            setupRoomSelectionListeners();
 
             onAuthStateChanged(auth, user => {
                 if (user) {
@@ -295,14 +298,19 @@
             onSnapshot(query(ideasCollectionRef), (snapshot) => {
                 allIdeas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderIdeas();
+            }, (error) => {
+                console.error("Firestore listener error:", error);
+                document.getElementById('loading-ideas').innerHTML = '<p class="text-red-700">Error fetching scrolls. Check console for details.</p>';
             });
         }
         
         function renderIdeas() {
+            const loadingIdeas = document.getElementById('loading-ideas');
+            loadingIdeas.style.display = 'none';
             ideasList.innerHTML = ''; 
-            document.getElementById('loading-ideas').style.display = 'none';
+
             if (allIdeas.length === 0) {
-                ideasList.innerHTML = '<p class="text-[#5d4037]">The scroll is blank. Be the first to inscribe an idea!</p>';
+                ideasList.innerHTML = '<p class="text-[#5d4037]">This scroll is blank. Be the first to inscribe an idea!</p>';
             } else {
                 allIdeas.sort((a,b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
                 allIdeas.forEach(idea => {
@@ -418,7 +426,6 @@
         }
 
         initialize();
-        setupRoomSelectionListeners();
     </script>
 </body>
 </html>
